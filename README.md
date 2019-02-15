@@ -1,3 +1,7 @@
+#for internal use only
+changed folder structure to match project,
+original documentation below
+
 # Cordova Localization String Plugin
 
 This plugin helps you to manage string files that you need natively, namely on Localizable.strings and InfoPlist.strings on iOS, and strings.xml on Android.
@@ -10,7 +14,7 @@ This plugin also lets you localize your app name on both iOS and Android.
     
 Install the plugin by fetching the dependencies
 
-    $ cordova plugin add https://github.com/kelvinhokk/cordova-plugin-localization-strings.git --fetch
+    $ cordova plugin add https://github.com/mazedesign/cordova-plugin-localization-strings.git --fetch
     
 
 Modify your project root to have the following structure:
