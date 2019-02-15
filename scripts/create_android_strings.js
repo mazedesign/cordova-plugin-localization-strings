@@ -195,28 +195,30 @@ function processResult(context, lang, langJson, stringXmlJson) {
     });
 
     //save to disk
-    // const langDir = getLocalizationDir(context, lang);
-    // const filePath = getLocalStringXmlPath(context, lang);
-    //
-    // fs.ensureDir(langDir, function (err) {
-    //     if (err) {
-    //         throw err;
-    //     }
-    //
-    //     fs.writeFile(filePath, buildXML(stringXmlJson), {encoding: 'utf8'}, function (err) {
-    //         if (err) throw err;
-    //         console.warn('Saved:' + filePath);
-    //         return deferred.resolve();
-    //     });
-    // });
-    //
-    // function buildXML(obj) {
-    //     const builder = new xml2js.Builder();
-    //     builder.options.renderOpts.indent = '\t';
-    //
-    //     const x = builder.buildObject(obj);
-    //     return x.toString();
-    // }
+    const langDir = getLocalizationDir(context, lang);
+    const filePath = getLocalStringXmlPath(context, lang);
+
+    fs.ensureDir(langDir, function (err) {
+        if (err) {
+            throw err;
+        }
+
+        console.warn('stringXmlJson', JSON.stringify(stringXmlJson, null, 2))
+
+        fs.writeFile(filePath, buildXML(stringXmlJson), {encoding: 'utf8'}, function (err) {
+            if (err) throw err;
+            console.warn('Saved:' + filePath);
+            return deferred.resolve();
+        });
+    });
+
+    function buildXML(obj) {
+        const builder = new xml2js.Builder();
+        builder.options.renderOpts.indent = '\t';
+
+        const x = builder.buildObject(obj);
+        return x.toString();
+    }
 
     return deferred.promise;
 }
