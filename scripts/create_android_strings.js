@@ -165,13 +165,14 @@ function processResult(context, lang, langJson, stringXmlJson) {
     const mapObj = {};
     // create a map to the actual string
     _.forEach(stringXmlJson.resources.string, function (val) {
-        console.warn('val0: ' + val)
+        console.warn('val0: ' + JSON.stringify(val, null, 2))
         if (_.has(val, "$") && _.has(val["$"], "name")) {
             mapObj[val["$"].name] = val;
         }
     });
 
     const langJsonToProcess = _.assignIn(langJson.config_android, langJson.app);
+    console.warn('langJsonToProcess: ' + JSON.stringify(langJsonToProcess, null, 2))
 
     //now iterate through langJsonToProcess
     _.forEach(langJsonToProcess, function (val, key) {
