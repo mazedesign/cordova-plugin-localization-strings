@@ -1,4 +1,4 @@
-import {getTargetLang} from 'shared';
+import getTargetLang from 'shared';
 
 const fs = require('fs-extra');
 const _ = require('lodash');
@@ -105,6 +105,7 @@ module.exports = function (context) {
                 //read the json file
                 const langJson = require(lang.path);
                 console.warn(langJson)
+                langJson = langJson.config
 
                 // check the locales to write to
                 const localeLangs = [];

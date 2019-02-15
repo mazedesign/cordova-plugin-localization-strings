@@ -1,4 +1,4 @@
-import {getTargetLang} from 'shared';
+import getTargetLang from 'shared';
 
 const fs = require('fs-extra');
 const _ = require('lodash');
