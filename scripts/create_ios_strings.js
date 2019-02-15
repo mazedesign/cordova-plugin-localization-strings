@@ -2,11 +2,12 @@ const fs = require('fs-extra');
 const _ = require('lodash');
 const iconv = require('iconv-lite');
 
-let iosProjFolder;
+let iosProjFolder = "platforms/ios/Car B";
 let iosPbxProjPath;
 
 const getValue = function (config, name) {
     const value = config.match(new RegExp('<' + name + '>(.*?)</' + name + '>', "i"));
+    console.log(value)
     if (value && value[1]) {
         return value[1]
     } else {
@@ -26,6 +27,7 @@ function initIosDir() {
     if (!iosProjFolder || !iosPbxProjPath) {
         const config = fs.readFileSync("config.xml").toString();
         const name = getValue(config, "name");
+        console.log('initIosDir name', name)
 
         iosProjFolder = "platforms/ios/" + name;
         iosPbxProjPath = "platforms/ios/" + name + ".xcodeproj/project.pbxproj";
