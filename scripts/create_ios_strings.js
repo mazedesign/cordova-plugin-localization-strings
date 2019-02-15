@@ -102,7 +102,7 @@ module.exports = function (context) {
 
                 //read the json file
                 let langJson = require(lang.path).config;
-                console.warn(langJson)
+                console.warn('langJsonIOS' + langJson)
 
                 // check the locales to write to
                 const localeLangs = [];

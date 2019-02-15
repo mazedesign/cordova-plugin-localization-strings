@@ -95,11 +95,8 @@ function processResult(context, lang, langJson, stringXmlJson) {
             throw err;
         }
 
-        console.warn('stringXmlJson', JSON.stringify(stringXmlJson, null, 2))
-
         fs.writeFile(filePath, buildXML(stringXmlJson), {encoding: 'utf8'}, function (err) {
             if (err) throw err;
-            console.warn('Saved:' + filePath);
             return deferred.resolve();
         });
     });
