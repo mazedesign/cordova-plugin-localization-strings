@@ -88,17 +88,22 @@ function getTargetLang(context) {
     const deferred = context.requireCordovaModule('q').defer();
     const path = context.requireCordovaModule('path');
     const glob = context.requireCordovaModule('glob');
+    console.log(
+        'targetLangArr: ' + targetLangArr,
+        'deferred: ' + deferred,
+        'path: ' + path,
+        'glob: ' + glob,
+    )
 
-    glob("translations/app/*.json", function (err, langFiles) {
+    glob("../res/lang/*/translations.json", function (err, langFiles) {
         if (err) {
             deferred.reject(err);
         } else {
             langFiles.forEach(function (langFile) {
-                const matches = langFile.match(/translations\/app\/(.*).json/);
-
+                const matches = langFile.match(/\/res\/lang\/(.*)\/translations.json/);
                 if (matches) {
                     targetLangArr.push({
-                        lang: matches[1],
+                        lang: matches[1].split('_')[0],
                         path: path.join(context.opts.projectRoot, langFile)
                     });
                 }
@@ -160,6 +165,7 @@ function processResult(context, lang, langJson, stringXmlJson) {
     const mapObj = {};
     // create a map to the actual string
     _.forEach(stringXmlJson.resources.string, function (val) {
+        console.log('val0: ' + val)
         if (_.has(val, "$") && _.has(val["$"], "name")) {
             mapObj[val["$"].name] = val;
         }
@@ -169,6 +175,7 @@ function processResult(context, lang, langJson, stringXmlJson) {
 
     //now iterate through langJsonToProcess
     _.forEach(langJsonToProcess, function (val, key) {
+        console.log('val1: ' + val)
         // positional string format is in Mac OS X format.  change to android format
         val = val.replace(/\$@/gi, "$s");
 
@@ -185,28 +192,28 @@ function processResult(context, lang, langJson, stringXmlJson) {
     });
 
     //save to disk
-    const langDir = getLocalizationDir(context, lang);
-    const filePath = getLocalStringXmlPath(context, lang);
-
-    fs.ensureDir(langDir, function (err) {
-        if (err) {
-            throw err;
-        }
-
-        fs.writeFile(filePath, buildXML(stringXmlJson), {encoding: 'utf8'}, function (err) {
-            if (err) throw err;
-            console.log('Saved:' + filePath);
-            return deferred.resolve();
-        });
-    });
-
-    function buildXML(obj) {
-        const builder = new xml2js.Builder();
-        builder.options.renderOpts.indent = '\t';
-
-        const x = builder.buildObject(obj);
-        return x.toString();
-    }
+    // const langDir = getLocalizationDir(context, lang);
+    // const filePath = getLocalStringXmlPath(context, lang);
+    //
+    // fs.ensureDir(langDir, function (err) {
+    //     if (err) {
+    //         throw err;
+    //     }
+    //
+    //     fs.writeFile(filePath, buildXML(stringXmlJson), {encoding: 'utf8'}, function (err) {
+    //         if (err) throw err;
+    //         console.log('Saved:' + filePath);
+    //         return deferred.resolve();
+    //     });
+    // });
+    //
+    // function buildXML(obj) {
+    //     const builder = new xml2js.Builder();
+    //     builder.options.renderOpts.indent = '\t';
+    //
+    //     const x = builder.buildObject(obj);
+    //     return x.toString();
+    // }
 
     return deferred.promise;
 }
