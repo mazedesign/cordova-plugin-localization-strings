@@ -1,5 +1,3 @@
-// import getTargetLang from 'shared';
-
 const fs = require('fs-extra');
 const _ = require('lodash');
 const xml2js = require('xml2js');
