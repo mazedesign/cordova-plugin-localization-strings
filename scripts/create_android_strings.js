@@ -171,8 +171,9 @@ function processResult(context, lang, langJson, stringXmlJson) {
         }
     });
 
+    console.warn('langJson: ' + JSON.stringify(langJson, null, 2))
+
     const langJsonToProcess = _.assignIn(langJson.config_android, langJson.app);
-    console.warn('langJsonToProcess: ' + JSON.stringify(langJsonToProcess, null, 2))
 
     //now iterate through langJsonToProcess
     _.forEach(langJsonToProcess, function (val, key) {
