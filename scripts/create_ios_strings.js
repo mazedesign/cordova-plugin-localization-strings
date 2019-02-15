@@ -103,9 +103,8 @@ module.exports = function (context) {
             languages.forEach(function (lang) {
 
                 //read the json file
-                const langJson = require(lang.path);
+                let langJson = require(lang.path).config;
                 console.warn(langJson)
-                langJson = langJson.config
 
                 // check the locales to write to
                 const localeLangs = [];
