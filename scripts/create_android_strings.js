@@ -97,8 +97,10 @@ function getTargetLang(context) {
                 console.warn('langFile: ' + langFile)
                 const matches = langFile.match(/\/res\/lang\/(.*)\/translations.json/);
                 if (matches) {
+                    const langString = matches[1].split('_')[0]
+                    console.warn(langString)
                     targetLangArr.push({
-                        lang: matches[1].split('_')[0],
+                        lang: langString,
                         path: path.join(context.opts.projectRoot, langFile)
                     });
                 }
@@ -163,7 +165,7 @@ function processResult(context, lang, langJson, stringXmlJson) {
     const mapObj = {};
     // create a map to the actual string
     _.forEach(stringXmlJson.resources.string, function (val) {
-        console.log('val0: ' + val)
+        console.warn('val0: ' + val)
         if (_.has(val, "$") && _.has(val["$"], "name")) {
             mapObj[val["$"].name] = val;
         }
@@ -173,7 +175,7 @@ function processResult(context, lang, langJson, stringXmlJson) {
 
     //now iterate through langJsonToProcess
     _.forEach(langJsonToProcess, function (val, key) {
-        console.log('val1: ' + val)
+        console.warn('val1: ' + val)
         // positional string format is in Mac OS X format.  change to android format
         val = val.replace(/\$@/gi, "$s");
 
@@ -200,7 +202,7 @@ function processResult(context, lang, langJson, stringXmlJson) {
     //
     //     fs.writeFile(filePath, buildXML(stringXmlJson), {encoding: 'utf8'}, function (err) {
     //         if (err) throw err;
-    //         console.log('Saved:' + filePath);
+    //         console.warn('Saved:' + filePath);
     //         return deferred.resolve();
     //     });
     // });
