@@ -3,11 +3,11 @@ const _ = require('lodash');
 const iconv = require('iconv-lite');
 
 let iosProjFolder = "platforms/ios/Car B";
-let iosPbxProjPath;
+let iosPbxProjPath = "platforms/ios/Car B.xcodeproj/project.pbxproj"
 
 const getValue = function (config, name) {
+    console.log(config)
     const value = config.match(new RegExp('<' + name + '>(.*?)</' + name + '>', "i"));
-    console.log(value)
     if (value && value[1]) {
         return value[1]
     } else {
@@ -27,10 +27,11 @@ function initIosDir() {
     if (!iosProjFolder || !iosPbxProjPath) {
         const config = fs.readFileSync("config.xml").toString();
         const name = getValue(config, "name");
-        console.log('initIosDir name', name)
 
-        iosProjFolder = "platforms/ios/" + name;
-        iosPbxProjPath = "platforms/ios/" + name + ".xcodeproj/project.pbxproj";
+        if (name) {
+            iosProjFolder = "platforms/ios/" + name;
+            iosPbxProjPath = "platforms/ios/" + name + ".xcodeproj/project.pbxproj";
+        }
     }
 }
 
