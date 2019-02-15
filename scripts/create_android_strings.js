@@ -88,18 +88,13 @@ function getTargetLang(context) {
     const deferred = context.requireCordovaModule('q').defer();
     const path = context.requireCordovaModule('path');
     const glob = context.requireCordovaModule('glob');
-    console.log(
-        'targetLangArr: ' + targetLangArr,
-        'deferred: ' + deferred,
-        'path: ' + path,
-        'glob: ' + glob,
-    )
 
     glob("../res/lang/*/translations.json", function (err, langFiles) {
         if (err) {
             deferred.reject(err);
         } else {
             langFiles.forEach(function (langFile) {
+                console.warn('langFile: ' + langFile)
                 const matches = langFile.match(/\/res\/lang\/(.*)\/translations.json/);
                 if (matches) {
                     targetLangArr.push({
@@ -112,6 +107,9 @@ function getTargetLang(context) {
         }
     });
 
+    console.warn(
+        'targetLangArr: ' + targetLangArr,
+    )
     return deferred.promise;
 }
 
