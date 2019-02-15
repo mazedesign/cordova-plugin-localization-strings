@@ -161,6 +161,7 @@ function processResult(context, lang, langJson, stringXmlJson) {
     const path = context.requireCordovaModule('path');
     const q = context.requireCordovaModule('q');
     const deferred = q.defer();
+    langJson = langJson.config
 
     const mapObj = {};
     // create a map to the actual string
