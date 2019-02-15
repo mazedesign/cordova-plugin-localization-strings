@@ -1,33 +1,33 @@
-var fs = require('fs-extra');
-var _ = require('lodash');
-var iconv = require('iconv-lite');
+const fs = require('fs-extra');
+const _ = require('lodash');
+const iconv = require('iconv-lite');
 
-var iosProjFolder;
-var iosPbxProjPath;
+let iosProjFolder;
+let iosPbxProjPath;
 
-var getValue = function(config, name) {
-    var value = config.match(new RegExp('<' + name + '>(.*?)</' + name + '>', "i"));
-    if(value && value[1]) {
+const getValue = function (config, name) {
+    const value = config.match(new RegExp('<' + name + '>(.*?)</' + name + '>', "i"));
+    if (value && value[1]) {
         return value[1]
     } else {
         return null
     }
 };
 
-function jsonToDotStrings(jsonObj){
-    var returnString = "";
-    _.forEach(jsonObj, function(val, key){
-        returnString += '"'+key+'" = "' + val +'";\n';
+function jsonToDotStrings(jsonObj) {
+    let returnString = "";
+    _.forEach(jsonObj, function (val, key) {
+        returnString += '"' + key + '" = "' + val + '";\n';
     });
     return returnString;
 }
 
-function initIosDir(){
+function initIosDir() {
     if (!iosProjFolder || !iosPbxProjPath) {
-        var config = fs.readFileSync("config.xml").toString();
-        var name = getValue(config, "name");
+        const config = fs.readFileSync("config.xml").toString();
+        const name = getValue(config, "name");
 
-        iosProjFolder =  "platforms/ios/" + name;
+        iosProjFolder = "platforms/ios/" + name;
         iosPbxProjPath = "platforms/ios/" + name + ".xcodeproj/project.pbxproj";
     }
 }
@@ -43,15 +43,15 @@ function getXcodePbxProjPath() {
 }
 
 function writeStringFile(plistStringJsonObj, lang, fileName) {
-    var lProjPath = getTargetIosDir() + "/Resources/" + lang + ".lproj";
+    const lProjPath = getTargetIosDir() + "/Resources/" + lang + ".lproj";
     fs.ensureDir(lProjPath, function (err) {
         if (!err) {
-            var stringToWrite = jsonToDotStrings(plistStringJsonObj);
+            const stringToWrite = jsonToDotStrings(plistStringJsonObj);
             // changed to utf-8 since well, ios 10:)
-            var buffer = iconv.encode(stringToWrite, 'utf8');
+            const buffer = iconv.encode(stringToWrite, 'utf8');
 
-            fs.open(lProjPath + "/" + fileName, 'w', function(err, fd) {
-                if(err) throw err;
+            fs.open(lProjPath + "/" + fileName, 'w', function (err, fd) {
+                if (err) throw err;
                 fs.writeFileSync(fd, buffer);
             });
         }
@@ -59,22 +59,22 @@ function writeStringFile(plistStringJsonObj, lang, fileName) {
 }
 
 function writeLocalisationFieldsToXcodeProj(filePaths, groupname, proj) {
-    var fileRefSection = proj.pbxFileReferenceSection();
-    var fileRefValues = _.values(fileRefSection);
+    const fileRefSection = proj.pbxFileReferenceSection();
+    const fileRefValues = _.values(fileRefSection);
 
     if (filePaths.length > 0) {
 
         // var groupKey;
-        var groupKey = proj.findPBXVariantGroupKey({name: groupname});
+        let groupKey = proj.findPBXVariantGroupKey({name: groupname});
         if (!groupKey) {
             // findPBXVariantGroupKey with name InfoPlist.strings not found.  creating new group
-            var localizableStringVarGroup = proj.addLocalizationVariantGroup(groupname);
+            const localizableStringVarGroup = proj.addLocalizationVariantGroup(groupname);
             groupKey = localizableStringVarGroup.fileRef;
         }
 
         filePaths.forEach(function (path) {
-            var results = _.find(fileRefValues, function(o){
-                return  (_.isObject(o) && _.has(o, "path") && o.path.replace(/['"]+/g, '') == path)
+            const results = _.find(fileRefValues, function (o) {
+                return (_.isObject(o) && _.has(o, "path") && o.path.replace(/['"]+/g, '') == path)
             });
             if (_.isUndefined(results)) {
                 //not found in pbxFileReference yet
@@ -83,42 +83,42 @@ function writeLocalisationFieldsToXcodeProj(filePaths, groupname, proj) {
         });
     }
 }
-module.exports = function(context) {
 
-    var path = context.requireCordovaModule('path');
-    var q = context.requireCordovaModule('q');
-    var deferred = q.defer();
-    var glob = context.requireCordovaModule('glob');
-    var xcode = require('xcode');
+module.exports = function (context) {
 
-    var localizableStringsPaths = [];
-    var infoPlistPaths = [];
+    const path = context.requireCordovaModule('path');
+    const q = context.requireCordovaModule('q');
+    const deferred = q.defer();
+    const glob = context.requireCordovaModule('glob');
+    const xcode = require('xcode');
+
+    const localizableStringsPaths = [];
+    const infoPlistPaths = [];
 
     getTargetLang(context)
-        .then(function(languages) {
+        .then(function (languages) {
 
-            languages.forEach(function(lang){
+            languages.forEach(function (lang) {
 
                 //read the json file
-                var langJson = require(lang.path);
+                const langJson = require(lang.path);
 
                 // check the locales to write to
-                var localeLangs = [];
+                const localeLangs = [];
                 if (_.has(langJson, "locale") && _.has(langJson.locale, "ios")) {
                     //iterate the locales to to be iterated.
-                    _.forEach(langJson.locale.ios, function(aLocale){
+                    _.forEach(langJson.locale.ios, function (aLocale) {
                         localeLangs.push(aLocale);
                     });
-                }
-                else {
+                } else {
                     // use the default lang from the filename, for example "en" in en.json
                     localeLangs.push(lang.lang);
                 }
 
-                _.forEach(localeLangs, function(localeLang){
+                _.forEach(localeLangs, function (localeLang) {
                     if (_.has(langJson, "config_ios")) {
                         //do processing for appname into plist
-                        var plistString = langJson.config_ios;
+                        const plistString = langJson.config_ios;
                         if (!_.isEmpty(plistString)) {
                             writeStringFile(plistString, localeLang, "InfoPlist.strings");
                             infoPlistPaths.push(localeLang + ".lproj/" + "InfoPlist.strings");
@@ -128,7 +128,7 @@ module.exports = function(context) {
                     //remove APP_NAME and write to Localizable.strings
                     if (_.has(langJson, "app")) {
                         //do processing for appname into plist
-                        var localizableStringsJson = langJson.app;
+                        const localizableStringsJson = langJson.app;
                         if (!_.isEmpty(localizableStringsJson)) {
                             writeStringFile(localizableStringsJson, localeLang, "Localizable.strings");
                             localizableStringsPaths.push(localeLang + ".lproj/" + "Localizable.strings");
@@ -138,13 +138,12 @@ module.exports = function(context) {
 
             });
 
-            var proj = xcode.project(getXcodePbxProjPath());
+            const proj = xcode.project(getXcodePbxProjPath());
 
             proj.parse(function (err) {
                 if (err) {
                     deferred.reject(err);
-                }
-                else {
+                } else {
 
                     writeLocalisationFieldsToXcodeProj(localizableStringsPaths, 'Localizable.strings', proj);
                     writeLocalisationFieldsToXcodeProj(infoPlistPaths, 'InfoPlist.strings', proj);
@@ -155,7 +154,7 @@ module.exports = function(context) {
                 }
             });
         })
-        .catch(function(err){
+        .catch(function (err) {
             deferred.reject(err);
         });
 
@@ -163,20 +162,19 @@ module.exports = function(context) {
 };
 
 function getTargetLang(context) {
-    var targetLangArr = [];
-    var deferred = context.requireCordovaModule('q').defer();
-    var path = context.requireCordovaModule('path');
-    var glob = context.requireCordovaModule('glob');
+    let targetLangArr = [];
+    const deferred = context.requireCordovaModule('q').defer();
+    const path = context.requireCordovaModule('path');
+    const glob = context.requireCordovaModule('glob');
 
     glob("translations/app/*.json",
-        function(err, langFiles) {
-            if(err) {
+        function (err, langFiles) {
+            if (err) {
                 deferred.reject(err);
-            }
-            else {
+            } else {
 
-                langFiles.forEach(function(langFile) {
-                    var matches = langFile.match(/translations\/app\/(.*).json/);
+                langFiles.forEach(function (langFile) {
+                    const matches = langFile.match(/translations\/app\/(.*).json/);
                     if (matches) {
                         targetLangArr.push({
                             lang: matches[1],

@@ -1,5 +1,5 @@
-var fs = require('fs-extra');
-var _ = require('lodash');
+const fs = require('fs-extra');
+const _ = require('lodash');
 xml2js = require('xml2js');
 
 function fileExists(path) {
@@ -11,18 +11,18 @@ function fileExists(path) {
 }
 
 module.exports = function (context) {
-    var q = context.requireCordovaModule('q');
-    var deferred = q.defer();
+    const q = context.requireCordovaModule('q');
+    const deferred = q.defer();
 
     getTargetLang(context).then(function (languages) {
-        var promisesToRun = [];
+        const promisesToRun = [];
 
         languages.forEach(function (lang) {
             //read the json file
-            var langJson = require(lang.path);
+            const langJson = require(lang.path);
 
             // check the locales to write to
-            var localeLangs = [];
+            const localeLangs = [];
             if (_.has(langJson, "locale") && _.has(langJson.locale, "android")) {
                 //iterate the locales to to be iterated.
                 _.forEach(langJson.locale.android, function (aLocale) {
@@ -34,10 +34,10 @@ module.exports = function (context) {
             }
 
             _.forEach(localeLangs, function (localeLang) {
-                var stringXmlFilePath = getLocalStringXmlPath(context, localeLang);
-                var parser = new xml2js.Parser();
+                const stringXmlFilePath = getLocalStringXmlPath(context, localeLang);
+                const parser = new xml2js.Parser();
 
-                var stringXmlJson;
+                let stringXmlJson;
                 if (!fileExists(stringXmlFilePath)) {
                     stringXmlJson = {
                         "resources": {
@@ -84,17 +84,17 @@ module.exports = function (context) {
 };
 
 function getTargetLang(context) {
-    var targetLangArr = [];
-    var deferred = context.requireCordovaModule('q').defer();
-    var path = context.requireCordovaModule('path');
-    var glob = context.requireCordovaModule('glob');
+    const targetLangArr = [];
+    const deferred = context.requireCordovaModule('q').defer();
+    const path = context.requireCordovaModule('path');
+    const glob = context.requireCordovaModule('glob');
 
     glob("translations/app/*.json", function (err, langFiles) {
         if (err) {
             deferred.reject(err);
         } else {
             langFiles.forEach(function (langFile) {
-                var matches = langFile.match(/translations\/app\/(.*).json/);
+                const matches = langFile.match(/translations\/app\/(.*).json/);
 
                 if (matches) {
                     targetLangArr.push({
@@ -111,9 +111,9 @@ function getTargetLang(context) {
 }
 
 function getLocalizationDir(context, lang) {
-    var path = context.requireCordovaModule('path');
+    const path = context.requireCordovaModule('path');
 
-    var langDir;
+    let langDir;
     switch (lang) {
         case "en":
             langDir = path.normalize(path.join(getResPath(context), 'values'));
@@ -126,9 +126,9 @@ function getLocalizationDir(context, lang) {
 }
 
 function getLocalStringXmlPath(context, lang) {
-    var path = context.requireCordovaModule('path');
+    const path = context.requireCordovaModule('path');
 
-    var filePath;
+    let filePath;
     switch (lang) {
         case "en":
             filePath = path.normalize(path.join(getResPath(context), 'values/strings.xml'));
@@ -141,8 +141,8 @@ function getLocalStringXmlPath(context, lang) {
 }
 
 function getResPath(context) {
-    var path = context.requireCordovaModule('path');
-    var locations = context.requireCordovaModule('cordova-lib/src/platforms/platforms').getPlatformApi('android').locations;
+    const path = context.requireCordovaModule('path');
+    const locations = context.requireCordovaModule('cordova-lib/src/platforms/platforms').getPlatformApi('android').locations;
 
     if (locations && locations.res) {
         return locations.res;
@@ -153,11 +153,11 @@ function getResPath(context) {
 
 // process the modified xml and put write to file
 function processResult(context, lang, langJson, stringXmlJson) {
-    var path = context.requireCordovaModule('path');
-    var q = context.requireCordovaModule('q');
-    var deferred = q.defer();
+    const path = context.requireCordovaModule('path');
+    const q = context.requireCordovaModule('q');
+    const deferred = q.defer();
 
-    var mapObj = {};
+    const mapObj = {};
     // create a map to the actual string
     _.forEach(stringXmlJson.resources.string, function (val) {
         if (_.has(val, "$") && _.has(val["$"], "name")) {
@@ -165,7 +165,7 @@ function processResult(context, lang, langJson, stringXmlJson) {
         }
     });
 
-    var langJsonToProcess = _.assignIn(langJson.config_android, langJson.app);
+    const langJsonToProcess = _.assignIn(langJson.config_android, langJson.app);
 
     //now iterate through langJsonToProcess
     _.forEach(langJsonToProcess, function (val, key) {
@@ -185,8 +185,8 @@ function processResult(context, lang, langJson, stringXmlJson) {
     });
 
     //save to disk
-    var langDir = getLocalizationDir(context, lang);
-    var filePath = getLocalStringXmlPath(context, lang);
+    const langDir = getLocalizationDir(context, lang);
+    const filePath = getLocalStringXmlPath(context, lang);
 
     fs.ensureDir(langDir, function (err) {
         if (err) {
@@ -201,10 +201,10 @@ function processResult(context, lang, langJson, stringXmlJson) {
     });
 
     function buildXML(obj) {
-        var builder = new xml2js.Builder();
+        const builder = new xml2js.Builder();
         builder.options.renderOpts.indent = '\t';
 
-        var x = builder.buildObject(obj);
+        const x = builder.buildObject(obj);
         return x.toString();
     }
 
