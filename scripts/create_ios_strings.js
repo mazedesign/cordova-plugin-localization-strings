@@ -1,3 +1,5 @@
+import {getTargetLang} from 'shared';
+
 const fs = require('fs-extra');
 const _ = require('lodash');
 const iconv = require('iconv-lite');
@@ -102,6 +104,7 @@ module.exports = function (context) {
 
                 //read the json file
                 const langJson = require(lang.path);
+                console.warn(langJson)
 
                 // check the locales to write to
                 const localeLangs = [];
@@ -160,32 +163,4 @@ module.exports = function (context) {
 
     return deferred.promise;
 };
-
-function getTargetLang(context) {
-    let targetLangArr = [];
-    const deferred = context.requireCordovaModule('q').defer();
-    const path = context.requireCordovaModule('path');
-    const glob = context.requireCordovaModule('glob');
-
-    glob("translations/app/*.json",
-        function (err, langFiles) {
-            if (err) {
-                deferred.reject(err);
-            } else {
-
-                langFiles.forEach(function (langFile) {
-                    const matches = langFile.match(/translations\/app\/(.*).json/);
-                    if (matches) {
-                        targetLangArr.push({
-                            lang: matches[1],
-                            path: path.join(context.opts.projectRoot, langFile)
-                        });
-                    }
-                });
-                deferred.resolve(targetLangArr);
-            }
-        }
-    );
-    return deferred.promise;
-}
 

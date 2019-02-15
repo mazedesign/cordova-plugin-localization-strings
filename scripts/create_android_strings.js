@@ -1,6 +1,8 @@
+import {getTargetLang} from 'shared';
+
 const fs = require('fs-extra');
 const _ = require('lodash');
-xml2js = require('xml2js');
+const xml2js = require('xml2js');
 
 function fileExists(path) {
     try {
@@ -8,6 +10,111 @@ function fileExists(path) {
     } catch (e) {
         return false;
     }
+}
+
+function getLocalizationDir(context, lang) {
+    const path = context.requireCordovaModule('path');
+
+    let langDir;
+    switch (lang) {
+        case "en":
+            langDir = path.normalize(path.join(getResPath(context), 'values'));
+            break;
+        default:
+            langDir = path.normalize(path.join(getResPath(context), 'values-' + lang));
+            break;
+    }
+    return langDir;
+}
+
+function getLocalStringXmlPath(context, lang) {
+    const path = context.requireCordovaModule('path');
+
+    let filePath;
+    switch (lang) {
+        case "en":
+            filePath = path.normalize(path.join(getResPath(context), 'values/strings.xml'));
+            break;
+        default:
+            filePath = path.normalize(path.join(getResPath(context), 'values-' + lang + '/', 'strings.xml'));
+            break;
+    }
+    return filePath;
+}
+
+function getResPath(context) {
+    const path = context.requireCordovaModule('path');
+    const locations = context.requireCordovaModule('cordova-lib/src/platforms/platforms').getPlatformApi('android').locations;
+
+    if (locations && locations.res) {
+        return locations.res;
+    }
+
+    return path.join(context.opts.projectRoot, 'platforms/android/res');
+}
+
+// process the modified xml and put write to file
+function processResult(context, lang, langJson, stringXmlJson) {
+    const path = context.requireCordovaModule('path');
+    const q = context.requireCordovaModule('q');
+    const deferred = q.defer();
+    langJson = langJson.config
+
+    const mapObj = {};
+    // create a map to the actual string
+    _.forEach(stringXmlJson.resources.string, function (val) {
+        if (_.has(val, "$") && _.has(val["$"], "name")) {
+            mapObj[val["$"].name] = val;
+        }
+    });
+
+    const langJsonToProcess = _.assignIn(langJson.config_android, langJson.app);
+
+    //now iterate through langJsonToProcess
+    _.forEach(langJsonToProcess, function (val, key) {
+
+        // positional string format is in Mac OS X format.  change to android format
+        val = val.replace(/\$@/gi, "$s");
+
+        if (_.has(mapObj, key)) {
+            // mapObj contains key. replace key
+            mapObj[key]["_"] = val;
+        } else {
+            // add by inserting
+            stringXmlJson.resources.string.push({
+                _: val,
+                '$': {name: key}
+            });
+        }
+    });
+
+    //save to disk
+    const langDir = getLocalizationDir(context, lang);
+    const filePath = getLocalStringXmlPath(context, lang);
+
+    fs.ensureDir(langDir, function (err) {
+        if (err) {
+            throw err;
+        }
+
+        console.warn('stringXmlJson', JSON.stringify(stringXmlJson, null, 2))
+
+        fs.writeFile(filePath, buildXML(stringXmlJson), {encoding: 'utf8'}, function (err) {
+            if (err) throw err;
+            console.warn('Saved:' + filePath);
+            return deferred.resolve();
+        });
+    });
+
+    function buildXML(obj) {
+        const builder = new xml2js.Builder();
+        builder.options.renderOpts.indent = '\t';
+
+        const x = builder.buildObject(obj);
+        return x.toString();
+    }
+
+    return deferred.promise;
 }
 
 module.exports = function (context) {
@@ -82,143 +189,3 @@ module.exports = function (context) {
 
     return deferred.promise;
 };
-
-function getTargetLang(context) {
-    const targetLangArr = [];
-    const deferred = context.requireCordovaModule('q').defer();
-    const path = context.requireCordovaModule('path');
-    const glob = context.requireCordovaModule('glob');
-
-    glob("../res/lang/*/translations.json", function (err, langFiles) {
-        if (err) {
-            deferred.reject(err);
-        } else {
-            langFiles.forEach(function (langFile) {
-                console.warn('langFile: ' + langFile)
-                const matches = langFile.match(/\/res\/lang\/(.*)\/translations.json/);
-                if (matches) {
-                    const langString = matches[1].split('_')[0]
-                    console.warn(langString)
-                    targetLangArr.push({
-                        lang: langString,
-                        path: path.join(context.opts.projectRoot, langFile)
-                    });
-                }
-            });
-            deferred.resolve(targetLangArr);
-        }
-    });
-
-    console.warn(
-        'targetLangArr: ' + targetLangArr,
-    )
-    return deferred.promise;
-}
-
-function getLocalizationDir(context, lang) {
-    const path = context.requireCordovaModule('path');
-
-    let langDir;
-    switch (lang) {
-        case "en":
-            langDir = path.normalize(path.join(getResPath(context), 'values'));
-            break;
-        default:
-            langDir = path.normalize(path.join(getResPath(context), 'values-' + lang));
-            break;
-    }
-    return langDir;
-}
-
-function getLocalStringXmlPath(context, lang) {
-    const path = context.requireCordovaModule('path');
-
-    let filePath;
-    switch (lang) {
-        case "en":
-            filePath = path.normalize(path.join(getResPath(context), 'values/strings.xml'));
-            break;
-        default:
-            filePath = path.normalize(path.join(getResPath(context), 'values-' + lang + '/', 'strings.xml'));
-            break;
-    }
-    return filePath;
-}
-
-function getResPath(context) {
-    const path = context.requireCordovaModule('path');
-    const locations = context.requireCordovaModule('cordova-lib/src/platforms/platforms').getPlatformApi('android').locations;
-
-    if (locations && locations.res) {
-        return locations.res;
-    }
-
-    return path.join(context.opts.projectRoot, 'platforms/android/res');
-}
-
-// process the modified xml and put write to file
-function processResult(context, lang, langJson, stringXmlJson) {
-    const path = context.requireCordovaModule('path');
-    const q = context.requireCordovaModule('q');
-    const deferred = q.defer();
-    langJson = langJson.config
-
-    const mapObj = {};
-    // create a map to the actual string
-    _.forEach(stringXmlJson.resources.string, function (val) {
-        console.warn('val0: ' + JSON.stringify(val, null, 2))
-        if (_.has(val, "$") && _.has(val["$"], "name")) {
-            mapObj[val["$"].name] = val;
-        }
-    });
-
-    console.warn('langJson: ' + JSON.stringify(langJson, null, 2))
-
-    const langJsonToProcess = _.assignIn(langJson.config_android, langJson.app);
-
-    //now iterate through langJsonToProcess
-    _.forEach(langJsonToProcess, function (val, key) {
-        console.warn('val1: ' + val)
-        // positional string format is in Mac OS X format.  change to android format
-        val = val.replace(/\$@/gi, "$s");
-
-        if (_.has(mapObj, key)) {
-            // mapObj contains key. replace key
-            mapObj[key]["_"] = val;
-        } else {
-            // add by inserting
-            stringXmlJson.resources.string.push({
-                _: val,
-                '$': {name: key}
-            });
-        }
-    });
-
-    //save to disk
-    const langDir = getLocalizationDir(context, lang);
-    const filePath = getLocalStringXmlPath(context, lang);
-
-    fs.ensureDir(langDir, function (err) {
-        if (err) {
-            throw err;
-        }
-
-        console.warn('stringXmlJson', JSON.stringify(stringXmlJson, null, 2))
-
-        fs.writeFile(filePath, buildXML(stringXmlJson), {encoding: 'utf8'}, function (err) {
-            if (err) throw err;
-            console.warn('Saved:' + filePath);
-            return deferred.resolve();
-        });
-    });
-
-    function buildXML(obj) {
-        const builder = new xml2js.Builder();
-        builder.options.renderOpts.indent = '\t';
-
-        const x = builder.buildObject(obj);
-        return x.toString();
-    }
-
-    return deferred.promise;
-}
