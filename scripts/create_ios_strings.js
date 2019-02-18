@@ -6,11 +6,11 @@ let iosProjFolder
 let iosPbxProjPath
 
 const getValue = function (config, name) {
-    const regex = new RegExp('w*>([A-Za-z0-9\s]*)</name>', 'ig')
+    const regex = new RegExp('(?!w*>)([A-Za-z0-9\s]*)(<\/name>)', 'ig')
     const match = config.match(regex)
     console.log('match', match, match.toString())
 
-    const value = config.match(new RegExp('.*>([A-Za-z0-9\\s]*)<\/name>', "ig"));
+    const value = config.match(regex);
     console.log('value', value[0], value[1], value[2])
     if (value[1]) {
         return value[1]
@@ -28,11 +28,9 @@ function jsonToDotStrings(jsonObj) {
 }
 
 function initIosDir() {
-
-    console.log('dir!', fs.readdirSync(process.cwd()))
     if (!iosProjFolder || !iosPbxProjPath) {
         const config = fs.readFileSync("config.xml").toString();
-        console.log('config', fs.readFileSync("config.xml").toString().substr(0,15) + '...')
+        console.log('config', fs.readFileSync("config.xml").toString().substr(0,50) + '...')
         const name = getValue(config, "name");
         console.log('name', name)
 
