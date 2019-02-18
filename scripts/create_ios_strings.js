@@ -24,8 +24,8 @@ function jsonToDotStrings(jsonObj) {
 }
 
 function initIosDir() {
-    console.log('config!', fs.readdir('./'), fs.readFileSync("config.xml"))
-    console.log('dir name!', __dirname, process.cwd())
+    console.log('config!', fs.readFileSync("config.xml").toString())
+    console.log('dir!', fs.readdirSync(process.cwd()))
     if (!iosProjFolder || !iosPbxProjPath) {
         const config = fs.readFileSync("config.xml").toString();
         const name = getValue(config, "name");
