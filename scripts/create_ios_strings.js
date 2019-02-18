@@ -2,8 +2,8 @@ const fs = require('fs-extra');
 const _ = require('lodash');
 const iconv = require('iconv-lite');
 
-let iosProjFolder = "platforms/ios/Playcar";
-let iosPbxProjPath = "platforms/ios/Playcar.xcodeproj/project.pbxproj"
+let iosProjFolder = "";
+let iosPbxProjPath = ""
 
 const getValue = function (config, name) {
     console.log(config)
@@ -24,6 +24,7 @@ function jsonToDotStrings(jsonObj) {
 }
 
 function initIosDir() {
+    console.log('config!', fs.readdir('./'), fs.readFileSync("config.xml"))
     if (!iosProjFolder || !iosPbxProjPath) {
         const config = fs.readFileSync("config.xml").toString();
         const name = getValue(config, "name");
