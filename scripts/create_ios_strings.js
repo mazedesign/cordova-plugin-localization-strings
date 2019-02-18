@@ -32,7 +32,7 @@ function initIosDir() {
     console.log('dir!', fs.readdirSync(process.cwd()))
     if (!iosProjFolder || !iosPbxProjPath) {
         const config = fs.readFileSync("config.xml").toString();
-        console.log('config', fs.readFileSync("config.xml").toString())
+        console.log('config', fs.readFileSync("config.xml").toString().substr(0,15) + '...')
         const name = getValue(config, "name");
         console.log('name', name)
 
