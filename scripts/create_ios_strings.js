@@ -6,13 +6,13 @@ let iosProjFolder
 let iosPbxProjPath
 
 const getValue = function (config, name) {
-    const regex = '/.*>([A-Za-z0-9]*)<\/name>/mi'
+    const regex = '/.*>([A-Za-z0-9\s]*)<\/name>/mi'
     const match = regex.exec(config)
-    console.log(match)
+    console.log('match', match, match.toString())
 
-    const value = config.match(new RegExp('.*>([A-Za-z0-9]*)<\/name>', "mi"));
+    const value = config.match(new RegExp('.*>([A-Za-z0-9\\s]*)<\/name>', "mi"));
     console.log('value', value[0], value[1], value[2])
-    if (value && value[1]) {
+    if (value[1]) {
         return value[1]
     } else {
         return null
