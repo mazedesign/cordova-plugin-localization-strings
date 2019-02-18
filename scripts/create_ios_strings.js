@@ -2,13 +2,13 @@ const fs = require('fs-extra');
 const _ = require('lodash');
 const iconv = require('iconv-lite');
 
-let iosProjFolder = "platforms/ios/Car B";
-let iosPbxProjPath = "platforms/ios/Car B.xcodeproj/project.pbxproj"
+let iosProjFolder = "platforms/ios/Playcar";
+let iosPbxProjPath = "platforms/ios/Playcar.xcodeproj/project.pbxproj"
 
 const getValue = function (config, name) {
-    const regex = new RegExp('(?!w*>)([A-Za-z0-9\s]*)(<\/name>)', 'ig')
+    const regex = new RegExp('(?!w*>)([A-Za-z0-9\\s]*)(<\/name>)', 'ig')
 
-    console.log('match', config.match(regex)[0].replace('</name>', ''))
+    console.log('match', config.match(regex), config.match(regex)[0].replace('</name>', ''))
     return config.match(regex)[0].replace('</name>', '') || null
 };
 
