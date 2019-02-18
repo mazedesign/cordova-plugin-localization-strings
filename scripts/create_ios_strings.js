@@ -6,8 +6,8 @@ let iosProjFolder
 let iosPbxProjPath
 
 const getValue = function (config, name) {
-    console.log(config)
     const value = config.match(new RegExp('<' + name + '>(.*?)</' + name + '>', "i"));
+    console.log('value', value)
     if (value && value[1]) {
         return value[1]
     } else {
@@ -24,11 +24,13 @@ function jsonToDotStrings(jsonObj) {
 }
 
 function initIosDir() {
-    console.log('config!', fs.readFileSync("config.xml").toString())
+
     console.log('dir!', fs.readdirSync(process.cwd()))
     if (!iosProjFolder || !iosPbxProjPath) {
         const config = fs.readFileSync("config.xml").toString();
+        console.log('config', fs.readFileSync("config.xml").toString())
         const name = getValue(config, "name");
+        console.log('name', name)
 
         if (name) {
             iosProjFolder = "platforms/ios/" + name;
