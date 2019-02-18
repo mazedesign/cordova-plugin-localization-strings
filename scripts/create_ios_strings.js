@@ -7,16 +7,9 @@ let iosPbxProjPath
 
 const getValue = function (config, name) {
     const regex = new RegExp('(?!w*>)([A-Za-z0-9\s]*)(<\/name>)', 'ig')
-    const match = config.match(regex)
-    console.log('match', match, match.toString())
 
-    const value = config.match(regex);
-    console.log('value', value[0], value[1], value[2])
-    if (value[1]) {
-        return value[1]
-    } else {
-        return null
-    }
+    console.log('match', config.match(regex)[0].replace('</name>', ''))
+    return config.match(regex)[0].replace('</name>', '') || null
 };
 
 function jsonToDotStrings(jsonObj) {
