@@ -2,8 +2,8 @@ const fs = require('fs-extra');
 const _ = require('lodash');
 const iconv = require('iconv-lite');
 
-let iosProjFolder = "platforms/ios/Playcar";
-let iosPbxProjPath = "platforms/ios/Playcar.xcodeproj/project.pbxproj"
+let iosProjFolder = null;
+let iosPbxProjPath = null;
 
 const getValue = function (config, name) {
     const regex = new RegExp('(?!w*>)([A-Za-z0-9\\s]*)(<\/name>)', 'ig')
