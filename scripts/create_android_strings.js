@@ -174,13 +174,7 @@ function getLocalStringXmlPath(context, lang) {
 
 function getResPath(context) {
     var path = require('path');
-    var locations = context.requireCordovaModule('cordova-lib/src/platforms/platforms').getPlatformApi('android').locations;
-
-    if (locations && locations.res) {
-        return locations.res;
-    }
-
-    return path.join(context.opts.projectRoot, 'platforms/android/res');
+    return path.join(context.opts.projectRoot, 'platforms/android/app/src/main/res');
 }
 
 // process the modified xml and put write to file
