@@ -1,9 +1,8 @@
 const ios_script = require('./create_ios_strings');
 const android_script = require('./create_android_strings');
 
-module.exports = function (context) {
-    const Q = context.requireCordovaModule('q');
-    const platforms = context.requireCordovaModule('cordova-lib/src/cordova/util').listPlatforms(context.opts.projectRoot);
+module.exports = function(context) {
+    var platforms = context.opts.platforms;
 
     const promises = [];
 
@@ -15,5 +14,5 @@ module.exports = function (context) {
         promises.push(android_script(context));
     }
 
-    return Q.all(promises);
+    return Promise.all(promises);
 };

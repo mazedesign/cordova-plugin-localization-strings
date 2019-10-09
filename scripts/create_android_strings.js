@@ -10,113 +10,8 @@ function fileExists(path) {
     }
 }
 
-function getLocalizationDir(context, lang) {
-    const path = context.requireCordovaModule('path');
-
-    let langDir;
-    switch (lang) {
-        case "en":
-            langDir = path.normalize(path.join(getResPath(context), 'values'));
-            break;
-        default:
-            langDir = path.normalize(path.join(getResPath(context), 'values-' + lang));
-            break;
-    }
-    return langDir;
-}
-
-function getLocalStringXmlPath(context, lang) {
-    const path = context.requireCordovaModule('path');
-
-    let filePath;
-    switch (lang) {
-        case "en":
-            filePath = path.normalize(path.join(getResPath(context), 'values/strings.xml'));
-            break;
-        default:
-            filePath = path.normalize(path.join(getResPath(context), 'values-' + lang + '/', 'strings.xml'));
-            break;
-    }
-    return filePath;
-}
-
-function getResPath(context) {
-    const path = context.requireCordovaModule('path');
-    const locations = context.requireCordovaModule('cordova-lib/src/platforms/platforms').getPlatformApi('android').locations;
-
-    if (locations && locations.res) {
-        return locations.res;
-    }
-
-    return path.join(context.opts.projectRoot, 'platforms/android/res');
-}
-
-// process the modified xml and put write to file
-function processResult(context, lang, langJson, stringXmlJson) {
-    const path = context.requireCordovaModule('path');
-    const q = context.requireCordovaModule('q');
-    const deferred = q.defer();
-    langJson = langJson.config
-
-    const mapObj = {};
-    // create a map to the actual string
-    _.forEach(stringXmlJson.resources.string, function (val) {
-        if (_.has(val, "$") && _.has(val["$"], "name")) {
-            mapObj[val["$"].name] = val;
-        }
-    });
-
-    const langJsonToProcess = _.assignIn(langJson.config_android, langJson.app);
-
-    //now iterate through langJsonToProcess
-    _.forEach(langJsonToProcess, function (val, key) {
-
-        // positional string format is in Mac OS X format.  change to android format
-        val = val.replace(/\$@/gi, "$s");
-
-        if (_.has(mapObj, key)) {
-            // mapObj contains key. replace key
-            mapObj[key]["_"] = val;
-        } else {
-            // add by inserting
-            stringXmlJson.resources.string.push({
-                _: val,
-                '$': {name: key}
-            });
-        }
-    });
-
-    //save to disk
-    const langDir = getLocalizationDir(context, lang);
-    const filePath = getLocalStringXmlPath(context, lang);
-
-    fs.ensureDir(langDir, function (err) {
-        if (err) {
-            throw err;
-        }
-
-        fs.writeFile(filePath, buildXML(stringXmlJson), {encoding: 'utf8'}, function (err) {
-            if (err) throw err;
-            return deferred.resolve();
-        });
-    });
-
-    function buildXML(obj) {
-        const builder = new xml2js.Builder();
-        builder.options.renderOpts.indent = '\t';
-
-        const x = builder.buildObject(obj);
-        return x.toString();
-    }
-
-    return deferred.promise;
-}
-
 module.exports = function (context) {
-    const q = context.requireCordovaModule('q');
-    const deferred = q.defer();
-
-    getTargetLang(context).then(function (languages) {
+    return getTargetLang(context).then(function (languages) {
         const promisesToRun = [];
 
         languages.forEach(function (lang) {
@@ -175,38 +70,163 @@ module.exports = function (context) {
             });
         });
 
-        return q.all(promisesToRun).then(function () {
-            deferred.resolve();
-        });
-    }).catch(function (err) {
-        deferred.reject(err);
+        return Promise.all(promisesToRun);
     });
-
-    return deferred.promise;
 };
 
-function getTargetLang(context) {
-    let targetLangArr = [];
-    const deferred = context.requireCordovaModule('q').defer();
-    const path = context.requireCordovaModule('path');
-    const glob = context.requireCordovaModule('glob');
+function getTranslationPath (config, name) {
+    const value = config.match(new RegExp('name="' + name + '" value="(.*?)"', "i"))
 
-    glob("../res/lang/*/translations.json", function (err, langFiles) {
-        if (err) {
-            deferred.reject(err);
-        } else {
-            langFiles.forEach(function (langFile) {
-                const matches = langFile.match(/\/res\/lang\/(.*)\/translations.json/);
-                if (matches) {
-                    const langString = matches[1].split('_')[0]
-                    targetLangArr.push({
-                        lang: langString,
-                        path: path.join(context.opts.projectRoot, langFile)
-                    });
-                }
+    if(value && value[1]) {
+        return value[1];
+
+    } else {
+        return null;
+    }
+}
+
+function getDefaultPath(context){
+    const configNodes = context.opts.plugin.pluginInfo._et._root._children;
+    let defaultTranslationPath = '';
+
+    for (const node in configNodes) {
+        if (configNodes[node].attrib.name == 'TRANSLATION_PATH') {
+            defaultTranslationPath = configNodes[node].attrib.default;
+        }
+    }
+    return defaultTranslationPath;
+}
+
+function getTargetLang(context) {
+    const targetLangArr = [];
+
+    const path = require('path');
+    const glob = require('glob');
+    let providedTranslationPathPattern;
+    let providedTranslationPathRegex;
+    const config = fs.readFileSync("config.xml").toString();
+    let PATH = getTranslationPath(config, "TRANSLATION_PATH");
+
+    if(PATH == null){
+        PATH = getDefaultPath(context);
+        providedTranslationPathPattern = PATH + "*.json";
+        providedTranslationPathRegex = new RegExp((PATH + "(.*).json"));
+    }
+    if(PATH != null){
+        if(/^\s*$/.test(PATH)){
+            providedTranslationPathPattern = getDefaultPath(context);
+            providedTranslationPathPattern = PATH + "*.json";
+            providedTranslationPathRegex = new RegExp((PATH + "(.*).json"));
+        }
+        else {
+            providedTranslationPathPattern = PATH + "*.json";
+            providedTranslationPathRegex = new RegExp((PATH + "(.*).json"));
+        }
+    }
+    return new Promise(function(resolve, reject) {
+      glob(providedTranslationPathPattern, function(error, langFiles) {
+        if (error) {
+          reject(error);
+        }
+        langFiles.forEach(function(langFile) {
+          const matches = langFile.match(providedTranslationPathRegex);
+          if (matches) {
+            targetLangArr.push({
+              lang: matches[1],
+              path: path.join(context.opts.projectRoot, langFile)
             });
-            deferred.resolve(targetLangArr);
+          }
+        });
+        resolve(targetLangArr);
+      })
+    });
+}
+
+function getLocalizationDir(context, lang) {
+    const path = require('path');
+
+    let langDir;
+    if (lang === "en") {
+      langDir = path.normalize(path.join(getResPath(context), 'values'));
+    } else {
+      langDir = path.normalize(path.join(getResPath(context), 'values-' + lang));
+    }
+    return langDir;
+}
+
+function getLocalStringXmlPath(context, lang) {
+    const path = require('path');
+
+    let filePath;
+    if (lang === "en") {
+      filePath = path.normalize(path.join(getResPath(context), 'values/strings.xml'));
+    } else {
+      filePath = path.normalize(path.join(getResPath(context), 'values-' + lang + '/', 'strings.xml'));
+    }
+    return filePath;
+}
+
+function getResPath(context) {
+    const path = require('path');
+    return path.join(context.opts.projectRoot, 'platforms/android/app/src/main/res');
+}
+
+// process the modified xml and put write to file
+function processResult(context, lang, langJson, stringXmlJson) {
+    const mapObj = {};
+    // create a map to the actual string
+    _.forEach(stringXmlJson.resources.string, function (val) {
+        if (_.has(val, "$") && _.has(val["$"], "name")) {
+            mapObj[val["$"].name] = val;
         }
     });
-    return deferred.promise;
+
+    const langJsonToProcess = _.assignIn(langJson.config_android, langJson.app, langJson.app_android);
+
+    //now iterate through langJsonToProcess
+    _.forEach(langJsonToProcess, function (val, key) {
+        // positional string format is in Mac OS X format.  change to android format
+        val = val.replace(/\$@/gi, "$s");
+        val = val.replace(/\'/gi, "\\'");
+
+        if (_.has(mapObj, key)) {
+            // mapObj contains key. replace key
+            mapObj[key]["_"] = val;
+        } else {
+            // add by inserting
+            stringXmlJson.resources.string.push({
+                _: val,
+                '$': {name: key}
+            });
+        }
+    });
+
+    //save to disk
+    const langDir = getLocalizationDir(context, lang);
+    const filePath = getLocalStringXmlPath(context, lang);
+
+    return new Promise(function(resolve, reject) {
+      fs.ensureDir(langDir, function (error) {
+        if (error) {
+          reject(error);
+        }
+
+        fs.writeFile(filePath, buildXML(stringXmlJson), {encoding: 'utf8'}, function (error) {
+            if (error) {
+              reject(error);
+            }
+
+            console.log('Saved:' + filePath);
+            resolve();
+        });
+      });
+    })
+
+    function buildXML(obj) {
+        const builder = new xml2js.Builder();
+        builder.options.renderOpts.indent = '\t';
+
+        const x = builder.buildObject(obj);
+        return x.toString();
+    }
 }
