@@ -1,18 +1,18 @@
-var fs = require('fs-extra');
-var _ = require('lodash');
-var iconv = require('iconv-lite');
-var xmldom = require('xmldom');
+const fs = require('fs-extra');
+const _ = require('lodash');
+const iconv = require('iconv-lite');
+const xmldom = require('xmldom');
 
-var iosProjFolder;
-var iosPbxProjPath;
+let iosProjFolder;
+let iosPbxProjPath;
 
-var getValue = function(configDoc, name) {
-    var name = configDoc.getElementsByTagName(name)[0];
+const getValue = function(configDoc, name) {
+    name = configDoc.getElementsByTagName(name)[0];
     return name.textContent
 }
 
 function jsonToDotStrings(jsonObj){
-    var returnString = "";
+    let returnString = "";
     _.forEach(jsonObj, function(val, key){
         returnString += '"'+key+'" = "' + val +'";\n';
     });
@@ -21,9 +21,9 @@ function jsonToDotStrings(jsonObj){
 
 function initIosDir(){
     if (!iosProjFolder || !iosPbxProjPath) {
-        var config = fs.readFileSync("config.xml").toString();
-        var configDoc = (new xmldom.DOMParser()).parseFromString(config, 'application/xml');
-        var name = getValue(configDoc, "name");
+        const config = fs.readFileSync("config.xml").toString();
+        const configDoc = (new xmldom.DOMParser()).parseFromString(config, 'application/xml');
+        const name = getValue(configDoc, "name");
 
         iosProjFolder =  "platforms/ios/" + name;
         iosPbxProjPath = "platforms/ios/" + name + ".xcodeproj/project.pbxproj";
@@ -41,11 +41,11 @@ function getXcodePbxProjPath() {
 }
 
 function writeStringFile(plistStringJsonObj, lang, fileName) {
-    var lProjPath = getTargetIosDir() + "/Resources/" + lang + ".lproj";
+    const lProjPath = getTargetIosDir() + "/Resources/" + lang + ".lproj";
     fs.ensureDir(lProjPath, function (err) {
         if (!err) {
-            var stringToWrite = jsonToDotStrings(plistStringJsonObj);
-            var buffer = iconv.encode(stringToWrite, 'utf8');
+            const stringToWrite = jsonToDotStrings(plistStringJsonObj);
+            const buffer = iconv.encode(stringToWrite, 'utf8');
 
             fs.open(lProjPath + "/" + fileName, 'w', function(err, fd) {
                 if(err) throw err;
@@ -56,35 +56,35 @@ function writeStringFile(plistStringJsonObj, lang, fileName) {
 }
 
 function writeLocalisationFieldsToXcodeProj(filePaths, groupname, proj) {
-    var fileRefSection = proj.pbxFileReferenceSection();
-    var fileRefValues = _.values(fileRefSection);
+    const fileRefSection = proj.pbxFileReferenceSection();
+    const fileRefValues = _.values(fileRefSection);
 
     if (filePaths.length > 0) {
 
-        // var groupKey;
-        var groupKey = proj.findPBXVariantGroupKey({name: groupname});
+        // const groupKey;
+        let groupKey = proj.findPBXVariantGroupKey({name: groupname});
         if (!groupKey) {
             // findPBXVariantGroupKey with name InfoPlist.strings not found.  creating new group
-            var localizableStringVarGroup = proj.addLocalizationVariantGroup(groupname);
+            const localizableStringVarGroup = proj.addLocalizationVariantGroup(groupname);
             groupKey = localizableStringVarGroup.fileRef;
         }
 
         filePaths.forEach(function (path) {
-            var results = _.find(fileRefValues, function(o){
+            const results = _.find(fileRefValues, function(o){
                 return  (_.isObject(o) && _.has(o, "path") && o.path.replace(/['"]+/g, '') == path)
             });
             if (_.isUndefined(results)) {
                 //not found in pbxFileReference yet
-                proj.addResourceFile("Resources/" + path, {variantGroup: true}, groupKey);
+                proj.addResourceFile("Resources/" + path, {constiantGroup: true}, groupKey);
             }
         });
     }
 }
 module.exports = function(context) {
-    var xcode = require('xcode');
+    const xcode = require('xcode');
 
-    var localizableStringsPaths = [];
-    var infoPlistPaths = [];
+    const localizableStringsPaths = [];
+    const infoPlistPaths = [];
 
     return getTargetLang(context)
         .then(function(languages) {
@@ -92,10 +92,10 @@ module.exports = function(context) {
             languages.forEach(function(lang){
 
                 //read the json file
-                var langJson = require(lang.path);
+                const langJson = require(lang.path);
 
                 // check the locales to write to
-                var localeLangs = [];
+                const localeLangs = [];
                 if (_.has(langJson, "locale") && _.has(langJson.locale, "ios")) {
                     //iterate the locales to to be iterated.
                     _.forEach(langJson.locale.ios, function(aLocale){
@@ -110,7 +110,7 @@ module.exports = function(context) {
                 _.forEach(localeLangs, function(localeLang){
                     if (_.has(langJson, "config_ios")) {
                         //do processing for appname into plist
-                        var plistString = langJson.config_ios;
+                        const plistString = langJson.config_ios;
                         if (!_.isEmpty(plistString)) {
                             writeStringFile(plistString, localeLang, "InfoPlist.strings");
                             infoPlistPaths.push(localeLang + ".lproj/" + "InfoPlist.strings");
@@ -120,7 +120,7 @@ module.exports = function(context) {
                     //remove APP_NAME and write to Localizable.strings
                     if (_.has(langJson, "app")) {
                         //do processing for appname into plist
-                        var localizableStringsJson = langJson.app;
+                        const localizableStringsJson = langJson.app;
                         
                         //ios specific strings
                         if (_.has(langJson, "app_ios")){
@@ -136,7 +136,7 @@ module.exports = function(context) {
 
             });
 
-            var proj = xcode.project(getXcodePbxProjPath());
+            const proj = xcode.project(getXcodePbxProjPath());
 
             return new Promise(function (resolve, reject) {
               proj.parse(function (error) {
@@ -157,7 +157,7 @@ module.exports = function(context) {
 
 
 function getTranslationPath (config, name) {
-    var value = config.match(new RegExp('name="' + name + '" value="(.*?)"', "i"))
+    const value = config.match(new RegExp('name="' + name + '" value="(.*?)"', "i"))
 
     if(value && value[1]) {
         return value[1];
@@ -168,10 +168,10 @@ function getTranslationPath (config, name) {
 }
 
 function getDefaultPath(context){
-    var configNodes = context.opts.plugin.pluginInfo._et._root._children;
-    var defaultTranslationPath = '';
+    const configNodes = context.opts.plugin.pluginInfo._et._root._children;
+    let defaultTranslationPath = '';
 
-    for (var node in configNodes) {
+    for (const node in configNodes) {
         if (configNodes[node].attrib.name == 'TRANSLATION_PATH') {
             defaultTranslationPath = configNodes[node].attrib.default;
         }
@@ -181,14 +181,14 @@ function getDefaultPath(context){
 
 
 function getTargetLang(context) {
-    var targetLangArr = [];
+    const targetLangArr = [];
 
-    var path = require('path');
-    var glob = require('glob');
-    var providedTranslationPathPattern;
-    var providedTranslationPathRegex;
-    var config = fs.readFileSync("config.xml").toString();  
-    var PATH = getTranslationPath(config, "TRANSLATION_PATH");
+    const path = require('path');
+    const glob = require('glob');
+    let providedTranslationPathPattern;
+    let providedTranslationPathRegex;
+    const config = fs.readFileSync("config.xml").toString();
+    let PATH = getTranslationPath(config, "TRANSLATION_PATH");
 
     if(PATH == null){
         PATH = getDefaultPath(context);
@@ -213,7 +213,7 @@ function getTargetLang(context) {
           reject(error);
         }
         langFiles.forEach(function(langFile) {
-          var matches = langFile.match(providedTranslationPathRegex);
+          const matches = langFile.match(providedTranslationPathRegex);
           if (matches) {
             targetLangArr.push({
               lang: matches[1],
