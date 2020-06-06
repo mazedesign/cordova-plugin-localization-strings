@@ -149,7 +149,7 @@ function getLocalizationDir(context, lang) {
     if (lang === "en") {
       langDir = path.normalize(path.join(getResPath(context), 'values'));
     } else {
-      langDir = path.normalize(path.join(getResPath(context), 'values-' + lang));
+      langDir = path.normalize(path.join(getResPath(context), 'values-b+' + lang.replace('_', '+')));
     }
     return langDir;
 }
@@ -161,7 +161,7 @@ function getLocalStringXmlPath(context, lang) {
     if (lang === "en") {
       filePath = path.normalize(path.join(getResPath(context), 'values/strings.xml'));
     } else {
-      filePath = path.normalize(path.join(getResPath(context), 'values-' + lang + '/', 'strings.xml'));
+      filePath = path.normalize(path.join(getResPath(context), 'values-b+' + lang.replace('_', '+') + '/', 'strings.xml'));
     }
     return filePath;
 }

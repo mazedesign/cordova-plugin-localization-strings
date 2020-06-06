@@ -179,7 +179,7 @@ function getDefaultPath(context) {
   let defaultTranslationPath = '';
 
   for (const node in configNodes) {
-    if (configNodes[node].attrib.name == 'TRANSLATION_PATH') {
+    if (configNodes[node].attrib.name === 'TRANSLATION_PATH') {
       defaultTranslationPath = configNodes[node].attrib.default;
     }
   }
